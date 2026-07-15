@@ -1,7 +1,7 @@
 // ============================================================
 // BOTIQUÍN — v0.01 DEV
 // ============================================================
-const APP_VERSION = "0.05-dev";
+const APP_VERSION = "0.06-dev";
 const STORAGE_KEY = "dev_botiquin_items";
 const SNAPSHOT_KEY = "dev_botiquin_snapshots";
 const DRIVE_TOKEN_KEY = "dev_botiquin_drive_token";
@@ -309,9 +309,21 @@ function stopScanner() {
   reader.style.display = "none";
 }
 
+function buscarPorCodigo(code) {
+  return activos().find(it => it.codigo && it.codigo === code) || null;
+}
+
 async function onScanSuccess(decodedText) {
-  document.getElementById("fCodigo").value = decodedText;
   stopScanner();
+
+  const existente = buscarPorCodigo(decodedText);
+  if (existente) {
+    showToast(`Ya tenías cargado "${existente.nombre}" — abriendo para editar`);
+    openForm(existente.id);
+    return;
+  }
+
+  document.getElementById("fCodigo").value = decodedText;
   document.getElementById("lookupStatus").textContent = "Buscando producto...";
   await lookupBarcode(decodedText);
 }
