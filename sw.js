@@ -1,4 +1,4 @@
-const CACHE_NAME = "botiquin-v0.01-dev";
+const CACHE_NAME = "botiquin-v0.02-dev";
 const ASSETS = [
   "./botiquin.html",
   "./app.js",
