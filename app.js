@@ -1,7 +1,7 @@
 // ============================================================
 // BOTIQUÍN — v0.01 DEV
 // ============================================================
-const APP_VERSION = "0.02-dev";
+const APP_VERSION = "0.03-dev";
 const STORAGE_KEY = "dev_botiquin_items";
 const SNAPSHOT_KEY = "dev_botiquin_snapshots";
 const DRIVE_TOKEN_KEY = "dev_botiquin_drive_token";
@@ -541,11 +541,23 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-document.getElementById("btnExit").addEventListener("click", () => {
-  if (confirm("¿Salir de Botiquín? Se guardó un backup local automáticamente.")) {
-    saveSnapshot();
-    window.close();
+document.getElementById("btnExit").addEventListener("click", async () => {
+  if (!confirm("¿Salir de Botiquín? Se guardó un backup local automáticamente.")) return;
+
+  saveSnapshot();
+
+  if (DriveSync.conectado()) {
+    showToast("Sincronizando con Drive antes de salir...");
+    try {
+      await DriveSync.sync();
+    } catch (e) {
+      console.error("Error sincronizando al salir", e);
+    }
+  } else {
+    alert("Drive no está conectado: este backup quedó solo en el celular/PC. Tocá 🔌 para conectar Drive y no depender de un solo dispositivo.");
   }
+
+  window.close();
 });
 
 // ---------- splash ----------
