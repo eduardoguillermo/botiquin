@@ -155,6 +155,7 @@
   <header class="top">
     <h2>Botiquín</h2>
     <div class="actions">
+      <button class="icon-btn" id="btnDrive" title="Conectar Google Drive">🔌</button>
       <button class="icon-btn" id="btnBackup" title="Backup ahora">☁️</button>
       <button class="icon-btn" id="btnExit" title="Salir">🚪</button>
     </div>
@@ -197,9 +198,13 @@
         <input type="number" id="fCantidad" min="0" step="1" value="1">
       </div>
       <div class="field">
-        <label>Stock mínimo</label>
-        <input type="number" id="fMinimo" min="0" step="1" value="1">
+        <label>Unidades por envase</label>
+        <input type="number" id="fUnidadesPorEnvase" min="1" step="1" value="1" placeholder="Ej: 12">
       </div>
+    </div>
+    <div class="field">
+      <label>Stock mínimo (en unidades totales)</label>
+      <input type="number" id="fMinimo" min="0" step="1" value="1" placeholder="Ej: 24 comprimidos">
     </div>
     <div class="field">
       <label>Fecha de vencimiento</label>
@@ -223,6 +228,7 @@
 </div>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="app.js"></script>
 </body>
 </html>
