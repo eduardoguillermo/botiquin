@@ -1,7 +1,7 @@
 // ============================================================
 // BOTIQUÍN — v0.01 DEV
 // ============================================================
-const APP_VERSION = "0.04-dev";
+const APP_VERSION = "0.05-dev";
 const STORAGE_KEY = "dev_botiquin_items";
 const SNAPSHOT_KEY = "dev_botiquin_snapshots";
 const DRIVE_TOKEN_KEY = "dev_botiquin_drive_token";
@@ -270,6 +270,14 @@ document.getElementById("btnSaveForm").addEventListener("click", () => {
 });
 
 document.getElementById("search").addEventListener("input", render);
+
+// ---------- ayuda ----------
+document.getElementById("btnHelp").addEventListener("click", () => {
+  document.getElementById("helpOverlay").classList.add("show");
+});
+document.getElementById("btnCloseHelp").addEventListener("click", () => {
+  document.getElementById("helpOverlay").classList.remove("show");
+});
 
 // ---------- barcode scanning ----------
 document.getElementById("btnScan").addEventListener("click", () => {
