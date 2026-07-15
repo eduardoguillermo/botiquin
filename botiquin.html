@@ -131,6 +131,10 @@
   #reader{width:100%; border-radius:8px; overflow:hidden; margin-bottom:14px; display:none;}
   .lookup-status{font-size:12px; color:var(--text-2); margin:-8px 0 12px;}
 
+  .help-item{margin-bottom:14px;}
+  .help-title{font-size:14px; font-weight:600; margin:0 0 3px;}
+  .help-desc{font-size:13px; color:var(--text-2); margin:0; line-height:1.5;}
+
   /* ---------- TOAST ---------- */
   #toast{
     position:fixed; left:16px; right:16px; bottom:20px; max-width:480px; margin:0 auto;
@@ -155,6 +159,7 @@
   <header class="top">
     <h2>Botiquín</h2>
     <div class="actions">
+      <button class="icon-btn" id="btnHelp" title="Ayuda">❓</button>
       <button class="icon-btn" id="btnDrive" title="Conectar Google Drive">🔌</button>
       <button class="icon-btn" id="btnBackup" title="Backup ahora">☁️</button>
       <button class="icon-btn" id="btnExit" title="Salir">🚪</button>
@@ -218,6 +223,47 @@
     <div class="sheet-actions">
       <button id="btnCancelForm">Cancelar</button>
       <button class="primary" id="btnSaveForm">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="helpOverlay">
+  <div class="sheet">
+    <h3>Cómo usar Botiquín</h3>
+    <div class="help-item">
+      <p class="help-title">➕ Agregar medicamento</p>
+      <p class="help-desc">Tocá "+ Agregar". Podés escanear el código de barras (intenta autocompletar el nombre) o cargar todo a mano: producto, para qué se usa, cantidad de envases, unidades por envase, stock mínimo y fecha de vencimiento.</p>
+    </div>
+    <div class="help-item">
+      <p class="help-title">− Usar</p>
+      <p class="help-desc">Descuenta 1 envase completo del medicamento. Aparece un aviso con opción "Deshacer" por si tocaste mal.</p>
+    </div>
+    <div class="help-item">
+      <p class="help-title">🗑️ Dar de baja</p>
+      <p class="help-desc">Saca el medicamento de la lista (por ejemplo si se venció y lo tiraste). También se puede deshacer justo después de hacerlo.</p>
+    </div>
+    <div class="help-item">
+      <p class="help-title">Colores del vencimiento</p>
+      <p class="help-desc">Verde: vence en más de un mes. Ámbar: vence dentro del mes. Rojo: vence en menos de una semana o ya venció.</p>
+    </div>
+    <div class="help-item">
+      <p class="help-title">⚠️ Stock mínimo</p>
+      <p class="help-desc">Si definiste un mínimo en unidades totales, aparece un aviso cuando la cantidad cae a ese nivel o menos.</p>
+    </div>
+    <div class="help-item">
+      <p class="help-title">🔌 Conectar Drive</p>
+      <p class="help-desc">Vincula tu cuenta de Google para sincronizar entre el celular y la PC. Se crea una carpeta "Botiquin" visible en tu Drive.</p>
+    </div>
+    <div class="help-item">
+      <p class="help-title">☁️ Backup ahora</p>
+      <p class="help-desc">Fuerza una sincronización manual con Drive en cualquier momento.</p>
+    </div>
+    <div class="help-item">
+      <p class="help-title">🚪 Salir</p>
+      <p class="help-desc">Guarda un backup local y sincroniza con Drive antes de cerrar. Si el backup a Drive falla, la app no se cierra para que puedas reintentar.</p>
+    </div>
+    <div class="sheet-actions">
+      <button class="primary" id="btnCloseHelp">Entendido</button>
     </div>
   </div>
 </div>
