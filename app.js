@@ -542,16 +542,17 @@ document.addEventListener("visibilitychange", () => {
 });
 
 document.getElementById("btnExit").addEventListener("click", async () => {
-  if (!confirm("¿Salir de Botiquín? Se guardó un backup local automáticamente.")) return;
+  if (!confirm("¿Salir de Botiquín? Se va a guardar un backup local antes de cerrar.")) return;
 
   saveSnapshot();
 
   if (DriveSync.conectado()) {
-    showToast("Sincronizando con Drive antes de salir...");
     try {
       await DriveSync.sync();
+      alert("Backup guardado en Drive. Cerrando Botiquín.");
     } catch (e) {
       console.error("Error sincronizando al salir", e);
+      alert("No se pudo guardar el backup en Drive (revisá conexión). Quedó el backup local igual.");
     }
   } else {
     alert("Drive no está conectado: este backup quedó solo en el celular/PC. Tocá 🔌 para conectar Drive y no depender de un solo dispositivo.");
