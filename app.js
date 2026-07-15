@@ -1,7 +1,7 @@
 // ============================================================
 // BOTIQUÍN — v0.01 DEV
 // ============================================================
-const APP_VERSION = "0.03-dev";
+const APP_VERSION = "0.04-dev";
 const STORAGE_KEY = "dev_botiquin_items";
 const SNAPSHOT_KEY = "dev_botiquin_snapshots";
 const DRIVE_TOKEN_KEY = "dev_botiquin_drive_token";
@@ -542,23 +542,24 @@ document.addEventListener("visibilitychange", () => {
 });
 
 document.getElementById("btnExit").addEventListener("click", async () => {
-  if (!confirm("¿Salir de Botiquín? Se va a guardar un backup local antes de cerrar.")) return;
+  if (!confirm("¿Salir de Botiquín? Se va a guardar un backup en Drive antes de cerrar.")) return;
 
   saveSnapshot();
 
-  if (DriveSync.conectado()) {
-    try {
-      await DriveSync.sync();
-      alert("Backup guardado en Drive. Cerrando Botiquín.");
-    } catch (e) {
-      console.error("Error sincronizando al salir", e);
-      alert("No se pudo guardar el backup en Drive (revisá conexión). Quedó el backup local igual.");
-    }
-  } else {
-    alert("Drive no está conectado: este backup quedó solo en el celular/PC. Tocá 🔌 para conectar Drive y no depender de un solo dispositivo.");
+  if (!DriveSync.conectado()) {
+    alert("Drive no está conectado, así que no puedo hacer backup antes de salir. Tocá 🔌 para conectar Drive, o volvé a intentar salir si igual querés forzarlo.");
+    return; // no cierra: falta la condición para el backup
   }
 
-  window.close();
+  try {
+    await DriveSync.sync();
+    alert("Backup guardado en Drive. Cerrando Botiquín.");
+    window.close();
+  } catch (e) {
+    console.error("Error sincronizando al salir", e);
+    alert("No se pudo guardar el backup en Drive (revisá conexión a internet). La app sigue abierta, reintentá salir cuando se resuelva.");
+    // no cierra: hubo error en el backup
+  }
 });
 
 // ---------- splash ----------
