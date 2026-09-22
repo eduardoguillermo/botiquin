@@ -1,7 +1,7 @@
 // ============================================================
 // BOTIQUÍN — v0.01 DEV
 // ============================================================
-const APP_VERSION = "0.07-dev";
+const APP_VERSION = "0.08-dev";
 const STORAGE_KEY = "dev_botiquin_items";
 const SNAPSHOT_KEY = "dev_botiquin_snapshots";
 const DRIVE_TOKEN_KEY = "dev_botiquin_drive_token";
@@ -683,5 +683,15 @@ if (DriveSync.conectado()) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
+
+    // El SW ya hace skipWaiting()+clients.claim() automáticamente al instalar
+    // una versión nueva (ver sw.js). Cuando eso pasa, recargamos la página una
+    // sola vez para que el HTML/JS visibles coincidan con la versión activa.
+    let yaRecargo = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (yaRecargo) return;
+      yaRecargo = true;
+      window.location.reload();
+    });
   });
 }
