@@ -1,7 +1,7 @@
 // ============================================================
 // BOTIQUÍN — v0.01 DEV
 // ============================================================
-const APP_VERSION = "0.06-dev";
+const APP_VERSION = "0.07-dev";
 const STORAGE_KEY = "dev_botiquin_items";
 const SNAPSHOT_KEY = "dev_botiquin_snapshots";
 const DRIVE_TOKEN_KEY = "dev_botiquin_drive_token";
@@ -51,7 +51,20 @@ function fmtFecha(dateStr) {
 
 function unidadesTotales(it) {
   const upe = Math.max(1, Number(it.unidadesPorEnvase) || 1);
+  if (esContenidoParcial(it)) {
+    return Number(it.cantidad) * upe + Number(it.restanteEnvaseAbierto || 0);
+  }
   return Number(it.cantidad) * upe;
+}
+
+// ml, g y dosis se consumen de a 1 unidad dentro de un envase abierto;
+// comprimidos/unidades sigue restando el envase entero (comportamiento original).
+function esContenidoParcial(it) {
+  return it.tipoContenido && it.tipoContenido !== "unidades";
+}
+
+function etiquetaUnidad(tipo) {
+  return tipo === "ml" ? "ml" : tipo === "g" ? "g" : tipo === "dosis" ? "dosis" : "unidad";
 }
 
 function activos() {
@@ -129,19 +142,33 @@ function renderItem(it) {
   const totalU = unidadesTotales(it);
   const bajoMinimo = (it.minimo != null) && (totalU <= Number(it.minimo));
   const upe = Math.max(1, Number(it.unidadesPorEnvase) || 1);
-  const detalleUnidades = upe > 1 ? ` (${totalU} unidades)` : "";
+  const parcial = esContenidoParcial(it);
+
+  let metaLinea;
+  if (parcial) {
+    const u = etiquetaUnidad(it.tipoContenido);
+    const abiertoTxt = it.restanteEnvaseAbierto
+      ? ` · envase abierto: ${it.restanteEnvaseAbierto}${u}`
+      : "";
+    metaLinea = `${it.cantidad} envase${it.cantidad === 1 ? "" : "s"} cerrado${it.cantidad === 1 ? "" : "s"} (${upe}${u} c/u)${abiertoTxt}`;
+  } else {
+    const detalleUnidades = upe > 1 ? ` (${totalU} unidades)` : "";
+    metaLinea = `${it.cantidad} envase${it.cantidad === 1 ? "" : "s"}${detalleUnidades}`;
+  }
+
+  const usarLabel = parcial ? `− Usar (1 ${etiquetaUnidad(it.tipoContenido)})` : "− Usar";
 
   div.innerHTML = `
     <div class="row-top">
       <div>
         <p class="name">${escapeHtml(it.nombre)}</p>
-        <p class="meta">${escapeHtml(it.uso || "sin uso especificado")} · ${it.cantidad} envase${it.cantidad === 1 ? "" : "s"}${detalleUnidades}</p>
+        <p class="meta">${escapeHtml(it.uso || "sin uso especificado")} · ${metaLinea}</p>
       </div>
       <span class="badge ${badgeClass}">Vence ${fmtFecha(it.vencimiento)}</span>
     </div>
-    ${bajoMinimo ? `<div class="low-stock">⚠️ Stock mínimo (${it.minimo} unidades) alcanzado</div>` : ""}
+    ${bajoMinimo ? `<div class="low-stock">⚠️ Stock mínimo (${it.minimo}${parcial ? etiquetaUnidad(it.tipoContenido) : " unidades"}) alcanzado</div>` : ""}
     <div class="row-actions">
-      <button class="usar">− Usar</button>
+      <button class="usar">${usarLabel}</button>
       <button class="editar">Editar</button>
       <button class="baja">Dar de baja</button>
     </div>
@@ -164,6 +191,12 @@ function escapeHtml(s) {
 function usarUnidad(id) {
   const it = items.find(i => i.id === id);
   if (!it) return;
+
+  if (esContenidoParcial(it)) {
+    usarUnidadContenido(it);
+    return;
+  }
+
   if (it.cantidad <= 0) return;
 
   const prevCantidad = it.cantidad;
@@ -179,6 +212,37 @@ function usarUnidad(id) {
     }
   };
   showToast(`Descontado 1 envase de ${it.nombre}`);
+}
+
+// Consumo de a 1 unidad (ml/g/dosis) dentro del envase abierto.
+// Si no hay envase abierto (o ya se terminó), abre uno nuevo restando de "cantidad".
+function usarUnidadContenido(it) {
+  const prevCantidad = it.cantidad;
+  const prevRestante = it.restanteEnvaseAbierto;
+
+  if (!prevRestante || prevRestante <= 0) {
+    if (it.cantidad <= 0) { showToast(`No queda stock de ${it.nombre}`); return; }
+    it.cantidad -= 1;
+    it.restanteEnvaseAbierto = Math.max(1, Number(it.unidadesPorEnvase) || 1);
+  }
+  it.restanteEnvaseAbierto -= 1;
+  it.lastModified = Date.now();
+  saveItems();
+
+  const u = etiquetaUnidad(it.tipoContenido);
+  lastAction = {
+    type: "usar",
+    undo: () => {
+      const target = items.find(i => i.id === it.id);
+      if (target) {
+        target.cantidad = prevCantidad;
+        target.restanteEnvaseAbierto = prevRestante;
+        target.lastModified = Date.now();
+        saveItems();
+      }
+    }
+  };
+  showToast(`Descontada 1${u} de ${it.nombre}`);
 }
 
 // Borrado lógico (tombstone): se mantiene el registro con deleted=true
@@ -225,7 +289,9 @@ function openForm(id) {
   document.getElementById("fNombre").value = it ? it.nombre : "";
   document.getElementById("fUso").value = it ? (it.uso || "") : "";
   document.getElementById("fCantidad").value = it ? it.cantidad : 1;
+  document.getElementById("fTipoContenido").value = it ? (it.tipoContenido || "unidades") : "unidades";
   document.getElementById("fUnidadesPorEnvase").value = it ? (it.unidadesPorEnvase || 1) : 1;
+  document.getElementById("fRestante").value = it && it.restanteEnvaseAbierto != null ? it.restanteEnvaseAbierto : "";
   document.getElementById("fMinimo").value = it ? (it.minimo != null ? it.minimo : 1) : 1;
   document.getElementById("fVencimiento").value = it ? (it.vencimiento || "") : "";
   document.getElementById("fCodigo").value = it ? (it.codigo || "") : "";
@@ -247,11 +313,14 @@ document.getElementById("btnSaveForm").addEventListener("click", () => {
   const nombre = document.getElementById("fNombre").value.trim();
   if (!nombre) { alert("Ingresá el nombre del producto"); return; }
 
+  const restanteRaw = document.getElementById("fRestante").value;
   const data = {
     nombre,
     uso: document.getElementById("fUso").value.trim(),
     cantidad: Math.max(0, parseInt(document.getElementById("fCantidad").value, 10) || 0),
+    tipoContenido: document.getElementById("fTipoContenido").value,
     unidadesPorEnvase: Math.max(1, parseInt(document.getElementById("fUnidadesPorEnvase").value, 10) || 1),
+    restanteEnvaseAbierto: restanteRaw === "" ? null : Math.max(0, parseInt(restanteRaw, 10) || 0),
     minimo: Math.max(0, parseInt(document.getElementById("fMinimo").value, 10) || 0),
     vencimiento: document.getElementById("fVencimiento").value || null,
     codigo: document.getElementById("fCodigo").value.trim() || null,
