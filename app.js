@@ -1,7 +1,7 @@
 // ============================================================
 // BOTIQUÍN — v0.01 DEV
 // ============================================================
-const APP_VERSION = "0.08-dev";
+const APP_VERSION = "0.09-dev";
 const STORAGE_KEY = "dev_botiquin_items";
 const SNAPSHOT_KEY = "dev_botiquin_snapshots";
 const DRIVE_TOKEN_KEY = "dev_botiquin_drive_token";
@@ -51,20 +51,19 @@ function fmtFecha(dateStr) {
 
 function unidadesTotales(it) {
   const upe = Math.max(1, Number(it.unidadesPorEnvase) || 1);
-  if (esContenidoParcial(it)) {
-    return Number(it.cantidad) * upe + Number(it.restanteEnvaseAbierto || 0);
-  }
-  return Number(it.cantidad) * upe;
-}
-
-// ml, g y dosis se consumen de a 1 unidad dentro de un envase abierto;
-// comprimidos/unidades sigue restando el envase entero (comportamiento original).
-function esContenidoParcial(it) {
-  return it.tipoContenido && it.tipoContenido !== "unidades";
+  return Number(it.cantidad) * upe + Number(it.restanteEnvaseAbierto || 0);
 }
 
 function etiquetaUnidad(tipo) {
   return tipo === "ml" ? "ml" : tipo === "g" ? "g" : tipo === "dosis" ? "dosis" : "unidad";
+}
+
+// Formatea cantidad + unidad con el espaciado/plural correcto según el tipo
+// (ml/g van pegados: "45ml"; dosis y unidad llevan espacio y pluralizan).
+function fmtCantidadUnidad(n, tipo) {
+  if (tipo === "ml" || tipo === "g") return `${n}${tipo}`;
+  if (tipo === "dosis") return `${n} dosis`;
+  return `${n} unidad${n === 1 ? "" : "es"}`;
 }
 
 function activos() {
@@ -142,21 +141,13 @@ function renderItem(it) {
   const totalU = unidadesTotales(it);
   const bajoMinimo = (it.minimo != null) && (totalU <= Number(it.minimo));
   const upe = Math.max(1, Number(it.unidadesPorEnvase) || 1);
-  const parcial = esContenidoParcial(it);
+  const u = etiquetaUnidad(it.tipoContenido);
 
-  let metaLinea;
-  if (parcial) {
-    const u = etiquetaUnidad(it.tipoContenido);
-    const abiertoTxt = it.restanteEnvaseAbierto
-      ? ` · envase abierto: ${it.restanteEnvaseAbierto}${u}`
-      : "";
-    metaLinea = `${it.cantidad} envase${it.cantidad === 1 ? "" : "s"} cerrado${it.cantidad === 1 ? "" : "s"} (${upe}${u} c/u)${abiertoTxt}`;
-  } else {
-    const detalleUnidades = upe > 1 ? ` (${totalU} unidades)` : "";
-    metaLinea = `${it.cantidad} envase${it.cantidad === 1 ? "" : "s"}${detalleUnidades}`;
-  }
-
-  const usarLabel = parcial ? `− Usar (1 ${etiquetaUnidad(it.tipoContenido)})` : "− Usar";
+  const abiertoTxt = it.restanteEnvaseAbierto
+    ? ` · envase abierto: ${fmtCantidadUnidad(it.restanteEnvaseAbierto, it.tipoContenido)}`
+    : "";
+  const metaLinea = `${it.cantidad} envase${it.cantidad === 1 ? "" : "s"} cerrado${it.cantidad === 1 ? "" : "s"} (${fmtCantidadUnidad(upe, it.tipoContenido)} c/u)${abiertoTxt}`;
+  const usarLabel = `− Usar (1 ${u})`;
 
   div.innerHTML = `
     <div class="row-top">
@@ -166,7 +157,7 @@ function renderItem(it) {
       </div>
       <span class="badge ${badgeClass}">Vence ${fmtFecha(it.vencimiento)}</span>
     </div>
-    ${bajoMinimo ? `<div class="low-stock">⚠️ Stock mínimo (${it.minimo}${parcial ? etiquetaUnidad(it.tipoContenido) : " unidades"}) alcanzado</div>` : ""}
+    ${bajoMinimo ? `<div class="low-stock">⚠️ Stock mínimo (${fmtCantidadUnidad(it.minimo, it.tipoContenido)}) alcanzado</div>` : ""}
     <div class="row-actions">
       <button class="usar">${usarLabel}</button>
       <button class="editar">Editar</button>
@@ -191,27 +182,7 @@ function escapeHtml(s) {
 function usarUnidad(id) {
   const it = items.find(i => i.id === id);
   if (!it) return;
-
-  if (esContenidoParcial(it)) {
-    usarUnidadContenido(it);
-    return;
-  }
-
-  if (it.cantidad <= 0) return;
-
-  const prevCantidad = it.cantidad;
-  it.cantidad -= 1;
-  it.lastModified = Date.now();
-  saveItems();
-
-  lastAction = {
-    type: "usar",
-    undo: () => {
-      const target = items.find(i => i.id === id);
-      if (target) { target.cantidad = prevCantidad; target.lastModified = Date.now(); saveItems(); }
-    }
-  };
-  showToast(`Descontado 1 envase de ${it.nombre}`);
+  usarUnidadContenido(it);
 }
 
 // Consumo de a 1 unidad (ml/g/dosis) dentro del envase abierto.
@@ -242,7 +213,7 @@ function usarUnidadContenido(it) {
       }
     }
   };
-  showToast(`Descontada 1${u} de ${it.nombre}`);
+  showToast(`Descontado ${fmtCantidadUnidad(1, it.tipoContenido)} de ${it.nombre}`);
 }
 
 // Borrado lógico (tombstone): se mantiene el registro con deleted=true
