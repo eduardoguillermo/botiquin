@@ -203,13 +203,28 @@
         <input type="number" id="fCantidad" min="0" step="1" value="1">
       </div>
       <div class="field">
-        <label>Unidades por envase</label>
-        <input type="number" id="fUnidadesPorEnvase" min="1" step="1" value="1" placeholder="Ej: 12">
+        <label>Tipo de contenido</label>
+        <select id="fTipoContenido">
+          <option value="unidades">Comprimidos/unidades</option>
+          <option value="ml">ml</option>
+          <option value="g">g</option>
+          <option value="dosis">Dosis</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Cantidad por envase</label>
+        <input type="number" id="fUnidadesPorEnvase" min="1" step="1" value="1" placeholder="Ej: 12 o 120">
+      </div>
+      <div class="field" id="wrapRestante">
+        <label>Restante en envase abierto</label>
+        <input type="number" id="fRestante" min="0" step="1" placeholder="Si ya viene usado">
       </div>
     </div>
     <div class="field">
       <label>Stock mínimo (en unidades totales)</label>
-      <input type="number" id="fMinimo" min="0" step="1" value="1" placeholder="Ej: 24 comprimidos">
+      <input type="number" id="fMinimo" min="0" step="1" value="1" placeholder="Ej: 24 comprimidos o 30ml">
     </div>
     <div class="field">
       <label>Fecha de vencimiento</label>
@@ -236,7 +251,7 @@
     </div>
     <div class="help-item">
       <p class="help-title">− Usar</p>
-      <p class="help-desc">Descuenta 1 envase completo del medicamento. Aparece un aviso con opción "Deshacer" por si tocaste mal.</p>
+      <p class="help-desc">Para comprimidos/unidades: descuenta 1 envase completo. Para ml, g o dosis: descuenta de a 1 unidad del envase que ya tenés abierto, y cuando se termina, abre automáticamente el próximo envase cerrado. Aparece un aviso con opción "Deshacer".</p>
     </div>
     <div class="help-item">
       <p class="help-title">🗑️ Dar de baja</p>
